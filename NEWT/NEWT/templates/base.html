@@ -1,0 +1,21 @@
+{% load staticfiles %}
+<html>
+  <head>
+    <a href="{% url 'home' %}">NEWT</a>
+    <link href="{% static 'css/default.css' %}"
+          rel="stylesheet" media="screen">
+
+    {% if user.is_authenticated %}
+        Welcome {{ user.username }} / <a href="{% url 'logout' %}">Log Out</a>
+    {% else %}
+        <a href="{% url 'login' %}">Log In</a> / <a href="{% url 'register' %}">Register</a>
+    {% endif %}
+
+  </head>
+
+  <body>
+    {% block content %}
+    {% endblock %}
+
+  </body>
+</html>

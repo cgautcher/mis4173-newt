@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block content %}
+        <p>Please fill out the following information and click submit:</p>
+
+        <form action="" method="post">{% csrf_token %}
+            {{ initiate_form.as_p }}
+            {{ config_details_form.as_p }}
+            {{ comment_form.as_p }}
+
+            <a href="{% url 'home' %}">
+              <input type="button" value="Cancel" />
+            </a>
+
+            <input type="submit" value="Submit" />
+        </form>
+{% endblock %}

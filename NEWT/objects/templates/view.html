@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Enablement Request - {{ enablement_request.identifier }}</h2>
+    <p>Enablement Request: {{ enablement_request.identifier }}</p>
+
+    {% if enablement_request.parent_identifier %}
+        <p>Parent Identifier: {{ enablement_request.parent_identifier }}</p>
+    {% endif %}
+
+    <p>Customer Name: {{ enablement_request.customer_name }}</p>
+    <p>Submitted on: {{ enablement_request.creation_timestamp }}</p>
+    <p>Current State: {{ enablement_request.current_state }}</p>
+    <p>OS Type: {{ configuration_details.os_type }}</p>
+    <p>OS Version: {{ configuration_details.os_version }}</p>
+    <p>Storage Adapter Vendor: {{ configuration_details.storage_adapter_vendor }}</p>
+    <p>Storage Adapter Model: {{ configuration_details.storage_adapter_model }}</p>
+    <p>Storage Adapter Driver: {{ configuration_details.storage_adapter_driver }}</p>
+    <p>Storage Adapter Firmware: {{ configuration_details.storage_adapter_firmware }}</p>
+    <p>Data ONTAP Version: {{ configuration_details.data_ontap_version }}</p>
+
+    <br></br>
+
+    {% if user.is_authenticated %}
+        <h2>Comments</h2>
+
+            {% for comment in comments %}
+              <hr>
+              <p>Submitted on: {{ comment.timestamp }}</p>
+              <p>Submitted by: {{ comment.commenter }}</p>
+              <p>Comment: {{ comment.text  }}</p>
+            {% endfor %}
+
+        <hr>
+        <h3>Add Comment:</h3>
+        <form action="" method="post">{% csrf_token %}
+            {{ comment_form.as_p }}
+            <input type='hidden' name="er_slug" value="{{ enablement_request.slug }}" />
+
+            <a href="{{ enablement_request.get_absolute_url }}">
+              <input type="button" value="Cancel" />
+            </a>
+
+            <input type="submit" value="Submit" />
+        </form>
+ 
+
+
+    {% endif %}
+
+
+{% endblock %}
