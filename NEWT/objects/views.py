@@ -32,18 +32,25 @@ class Initiate(View):
         if initiate_form.is_valid() and config_details_form.is_valid() and comment_form.is_valid():
             customer_name = initiate_form.cleaned_data['customer_name']
             configuration_details = config_details_form.save()
+
+            configuration_details_id = int(configuration_details.id)
+            first_parent_request = EnablementRequest.objects.filter(configuration_details_id=configuration_details_id).first()
+            if first_parent_request:
+                parent_request = first_parent_request.identifier
+            else:
+                parent_request = ""
             
             # set current_state to 'Enablement Review'
             current_state = 'Enablement Review'
 
             enablement_request = EnablementRequest(
                 customer_name=customer_name,
+                parent_request=parent_request,
                 sales_initiator=request.user,
                 configuration_details=configuration_details,
                 current_state=current_state
             )
 
-            enablement_request.full_clean()
             enablement_request.save()
             id = enablement_request.id
             identifier = 'ER-' + str(id).zfill(6)
@@ -94,13 +101,17 @@ class Update(View):
         comment_form = CommentForm(request.POST)
 
         if update_form.is_valid() and config_details_form.is_valid() and comment_form.is_valid():
-            new_configuration_details_id = config_details_form.save()
-            if old_configuration_details_id == new_configuration_details_id:
-                update_form.save()
-            else:
+            configuration_details = config_details_form.save()
+            configuration_details_id = int(configuration_details.id)
+            first_parent_request = EnablementRequest.objects.filter(configuration_details_id=configuration_details_id).first()
+            if first_parent_request:
+                parent_request = first_parent_request.identifier
                 updated_enablement_request = update_form.save(commit=False)
-                updated_enablement_request.configuration_details_id = new_configuration_details_id
+                updated_enablement_request.parent_request = parent_request
                 updated_enablement_request.save()
+            else:
+                update_form.save()
+
             comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
             return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))

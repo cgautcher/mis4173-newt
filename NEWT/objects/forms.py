@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth.models import Group, User
+from django.db.models.base import ObjectDoesNotExist
 
 from models import EnablementRequest, ConfigurationDetails, Comment
 
@@ -64,6 +65,45 @@ class ConfigurationDetailsForm(forms.ModelForm):
             "data_ontap_version",
         )
 
+    # override save() in order to return existing instance if no changes during UpdateEnablementRequestForm,
+    # + or if a new ER has the exact same configuration, use existing instance 
+    def save(self, commit=True):
+        if commit:
+            cleaned_data = self.cleaned_data
+            os_type_value = cleaned_data['os_type']
+            os_version_value = cleaned_data['os_version']
+            storage_adapter_vendor_value = cleaned_data['storage_adapter_vendor']
+            storage_adapter_model_value = cleaned_data['storage_adapter_model']
+            storage_adapter_driver_value = cleaned_data['storage_adapter_driver']
+            storage_adapter_firmware_value = cleaned_data['storage_adapter_firmware']
+            data_ontap_version_value = cleaned_data['data_ontap_version']
+
+            # check database to see if this instance already exists,
+            # + if not, it will raise an exception, which we will catch,
+            # + and it will add the new instance instead of erroring out
+            try:
+                instance = ConfigurationDetails.objects.get(os_type=os_type_value,
+                                                            os_version=os_version_value,
+                                                            storage_adapter_vendor=storage_adapter_vendor_value,
+                                                            storage_adapter_model=storage_adapter_model_value,
+                                                            storage_adapter_driver=storage_adapter_driver_value,
+                                                            storage_adapter_firmware=storage_adapter_firmware_value,
+                                                            data_ontap_version=data_ontap_version_value)
+            except ObjectDoesNotExist: 
+                configuration_details = ConfigurationDetails(os_type=os_type_value,
+                                                             os_version=os_version_value,
+                                                             storage_adapter_vendor=storage_adapter_vendor_value,
+                                                             storage_adapter_model=storage_adapter_model_value,
+                                                             storage_adapter_driver=storage_adapter_driver_value,
+                                                             storage_adapter_firmware=storage_adapter_firmware_value,
+                                                             data_ontap_version=data_ontap_version_value)
+                configuration_details.save()
+                return configuration_details
+
+
+            # if the exception above did not get raised, return instance
+            return instance
+                
 
 class CommentForm(forms.ModelForm):
     text = forms.CharField(label="", widget=forms.Textarea)

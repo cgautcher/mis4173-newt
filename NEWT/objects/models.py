@@ -7,7 +7,7 @@ from django.contrib.auth.models import User
 
 class EnablementRequest(models.Model):
     identifier = models.CharField(max_length=9, unique=True, blank=True)
-    parent_request = models.ForeignKey('self', to_field='identifier', null=True, blank=True)    
+    parent_request = models.CharField(max_length=9, null=True, blank=True)    
     slug = models.SlugField(max_length=9, unique=True, blank=True)
     customer_name = models.CharField(max_length=100)
     creation_timestamp = models.DateTimeField(auto_now_add=True)
@@ -37,10 +37,6 @@ class EnablementRequest(models.Model):
 
 
 class ConfigurationDetails(models.Model):
-
-    # need to figure out how to how to NOT save new instance of this class
-    #  when the details are identical to an existing record
-    #  and instead have EnablementRequest reference the existing ConfigurationDetails record 
 
     OS_TYPES = (
         ('Windows Server', 'Windows Server'),
