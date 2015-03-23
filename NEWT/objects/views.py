@@ -1,6 +1,7 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
 
 from django.views.generic import View, ListView, DetailView, FormView
 from django.views.generic.detail import SingleObjectMixin
@@ -64,7 +65,7 @@ class Initiate(View):
         }
         return render(request, self.template_name, context)
             
-    def get(self, request):
+    def get(self, request, *args, **kwargs):
         initiate_form = InitiateEnablementRequestForm()
         config_details_form = ConfigurationDetailsForm()
         comment_form = CommentForm()
@@ -76,6 +77,56 @@ class Initiate(View):
             'config_details_form': config_details_form,
             'comment_form': comment_form,
             'groups_of_request_user': groups_of_request_user 
+        }
+        return render(request, self.template_name, context)
+
+
+class Update(View):
+    template_name = 'update.html'
+
+    def post(self, request, *args, **kwargs):
+        self.slug = self.kwargs['slug']
+        enablement_request = EnablementRequest.objects.get(slug=self.slug)
+        old_configuration_details_id = enablement_request.configuration_details_id
+
+        update_form = UpdateEnablementRequestForm(request.POST, instance=enablement_request)
+        config_details_form = ConfigurationDetailsForm(request.POST)
+        comment_form = CommentForm(request.POST)
+
+        if update_form.is_valid() and config_details_form.is_valid() and comment_form.is_valid():
+            new_configuration_details_id = config_details_form.save()
+            if old_configuration_details_id == new_configuration_details_id:
+                update_form.save()
+            else:
+                updated_enablement_request = update_form.save(commit=False)
+                updated_enablement_request.configuration_details_id = new_configuration_details_id
+                updated_enablement_request.save()
+            comment_form.save(enablement_request=enablement_request, commenter=request.user)
+
+            return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))
+
+        context = {
+            'enablement_request': enablement_request,
+            'update_form': update_form,
+            'config_details_form': config_details_form,
+            'comment_form': comment_form,
+        }
+        return render(request, self.template_name, context)
+
+    def get(self, request, *args, **kwargs):
+        self.slug = self.kwargs['slug']
+        enablement_request = EnablementRequest.objects.get(slug=self.slug)
+        configuration_details = enablement_request.configuration_details
+        
+        update_form = UpdateEnablementRequestForm(instance=enablement_request)
+        config_details_form = ConfigurationDetailsForm(instance=configuration_details)
+        comment_form = CommentForm()
+
+        context = {
+            'enablement_request': enablement_request,
+            'update_form': update_form,
+            'config_details_form': config_details_form,
+            'comment_form': comment_form,
         }
         return render(request, self.template_name, context)
 
@@ -108,10 +159,10 @@ class CommentInViewDetails(View):
     def post(self, request, *args, **kwargs):
         comment_form = CommentForm(request.POST)
         if comment_form.is_valid():
-            slug = request.POST['er_slug']
-            enablement_request = EnablementRequest.objects.get(slug=slug)
+            enablement_request_slug = request.POST['er_slug']
+            enablement_request = EnablementRequest.objects.get(slug=enablement_request_slug)
             comment_form.save(enablement_request=enablement_request, commenter=request.user)
-            return HttpResponseRedirect(reverse('view', kwargs={'slug': slug}))
+            return HttpResponseRedirect(reverse('view', kwargs={'slug': enablement_request_slug}))
 
 
 class ViewDetailsAndComments(View):
@@ -123,3 +174,4 @@ class ViewDetailsAndComments(View):
     def post(self, request, *args, **kwargs):
         view = CommentInViewDetails.as_view()
         return view(request, *args, **kwargs)
+

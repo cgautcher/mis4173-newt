@@ -3,7 +3,7 @@ from django.contrib import admin
 
 from home import views
 from register.views import Register
-from objects.views import Initiate, List, ViewDetails, ViewDetailsAndComments
+from objects.views import Initiate, List, ViewDetailsAndComments, Update
 
 
 urlpatterns = patterns('',
@@ -19,8 +19,9 @@ urlpatterns = patterns('',
 
     url(r'^list/', List.as_view(), name='list'),
 
-#    url(r'^view/(?P<slug>[-_\w]+)/$', ViewDetails.as_view(), name='view'),
     url(r'^view/(?P<slug>[-_\w]+)/$', ViewDetailsAndComments.as_view(), name='view'),
+
+    url(r'^update/(?P<slug>[-_\w]+)/$', Update.as_view(), name='update'),
 
     url(r'^login/$', 'django.contrib.auth.views.login', name='login'),
     url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout'),

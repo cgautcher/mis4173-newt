@@ -1,5 +1,5 @@
 from django import forms
-from django.contrib.auth.models import Group
+from django.contrib.auth.models import Group, User
 
 from models import EnablementRequest, ConfigurationDetails, Comment
 
@@ -10,10 +10,10 @@ class InitiateEnablementRequestForm(forms.Form):
 class UpdateEnablementRequestForm(forms.ModelForm):
     customer_name = forms.CharField(label='Customer Name')
     current_state = forms.ChoiceField(label='Current State', choices=EnablementRequest.ALLOWED_STATES)
-    parent_request = forms.CharField(label='Parent Request')
+    parent_request = forms.CharField(label='Parent Request', required=False)
 
-    ENABLEMENT_USERS = tuple(Group.objects.get(name='Enablement').user_set.values_list('id','username'))
-    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_USERS)
+    ENABLEMENT_ENGINEERS = tuple(Group.objects.get(name='Enablement').user_set.values_list('id', 'username'))
+    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS)
 
     class Meta:
         model = EnablementRequest
@@ -23,7 +23,25 @@ class UpdateEnablementRequestForm(forms.ModelForm):
             "parent_request",
             "assigned_engineer",
         )
-    
+
+    def clean(self):
+        #run the standard clean method first
+        cleaned_data=super(UpdateEnablementRequestForm, self).clean()
+
+        assigned_engineer_id = cleaned_data['assigned_engineer']
+        assigned_engineer_instance = User.objects.get(id=assigned_engineer_id)
+        cleaned_data['assigned_engineer'] = assigned_engineer_instance
+
+        parent_request = cleaned_data['parent_request']
+        if parent_request:
+            parent_request_instance = EnablementRequest.objects.get(identifier=parent_request)
+            cleaned_data['parent_request'] = parent_request_instance
+        else:
+            del cleaned_data['parent_request']
+
+        #always return the cleaned data
+        return cleaned_data
+
 
 class ConfigurationDetailsForm(forms.ModelForm):
     os_type = forms.ChoiceField(label='OS Type', choices=ConfigurationDetails.OS_TYPES)
