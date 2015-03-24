@@ -3,7 +3,11 @@ from django.contrib import admin
 
 from home import views
 from register.views import Register
-from objects.views import Initiate, List, ViewDetailsAndComments, Update
+from objects.views import (Initiate,
+                           Locate,
+                           Filter,
+                           ViewDetailsAndComments,
+                           Update,)
 
 
 urlpatterns = patterns('',
@@ -17,7 +21,9 @@ urlpatterns = patterns('',
     
     url(r'^initiate/', Initiate.as_view(), name='initiate'),
 
-    url(r'^list/', List.as_view(), name='list'),
+    url(r'^locate/', Locate.as_view(), name='locate'),
+
+    url(r'^filter/', Filter.as_view(), name='filter'),
 
     url(r'^view/(?P<slug>[-_\w]+)/$', ViewDetailsAndComments.as_view(), name='view'),
 

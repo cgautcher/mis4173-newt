@@ -11,6 +11,11 @@
         <a href="{% url 'login' %}">Log In</a> / <a href="{% url 'register' %}">Register</a>
     {% endif %}
 
+    <form action="{% url 'locate' %}" method="post">{% csrf_token %}
+        <input type="text" name="locate_identifier">
+        <input type="submit" value="Locate">
+    </form>
+
   </head>
 
   <body>

@@ -8,6 +8,25 @@ from models import EnablementRequest, ConfigurationDetails, Comment
 class InitiateEnablementRequestForm(forms.Form):
     customer_name = forms.CharField(label='Customer Name')
 
+class FilterForm(forms.Form):
+    customer_name = forms.CharField(label='Customer Name', required=False)
+
+    os_type_list = list(ConfigurationDetails.OS_TYPES)
+    os_type_list.insert(0, ('','----'))
+    os_type = forms.ChoiceField(label='OS Type', choices=os_type_list, required=False)
+
+    os_version = forms.CharField(label='OS Version', required=False)
+
+    storage_adapter_vendor_list = list(ConfigurationDetails.STORAGE_ADAPTER_VENDORS)
+    storage_adapter_vendor_list.insert(0, ('','----'))
+    storage_adapter_vendor = forms.ChoiceField(label='Storage Adapter Vendor', choices=storage_adapter_vendor_list, required=False)
+
+    storage_adapter_model = forms.CharField(label='Storage Adapter Model', required=False)
+    storage_adapter_driver = forms.CharField(label='Storage Adapter Driver', required=False)
+    storage_adapter_firmware = forms.CharField(label='Storage Adapter Firmware', required=False)
+    data_ontap_version = forms.CharField(label='Data ONTAP Version', required=False)
+
+
 class UpdateEnablementRequestForm(forms.ModelForm):
     customer_name = forms.CharField(label='Customer Name')
     current_state = forms.ChoiceField(label='Current State', choices=EnablementRequest.ALLOWED_STATES)

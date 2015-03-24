@@ -11,7 +11,8 @@ from forms import (InitiateEnablementRequestForm,
                    ConfigurationDetailsForm,
                    CommentForm,
                    RequestFeedbackForm,
-                   ProvideFeedbackForm,)
+                   ProvideFeedbackForm,
+                   FilterForm,)
 
 from models import (EnablementRequest,
                     ConfigurationDetails,
@@ -141,14 +142,73 @@ class Update(View):
         return render(request, self.template_name, context)
 
 
-class List(ListView):
-    template_name = 'list.html'
-    model = EnablementRequest
+class Locate(View):
+    """View to handle the search box form POST in base.html"""
 
-    context_object_name = 'enablement_request_list'
+    template_name = 'locate.html'
+ 
+    def post(self, request, *args, **kwargs): 
+        locate_identifier = request.POST['locate_identifier']
+        results = EnablementRequest.objects.filter(identifier__contains=locate_identifier)
+  
+        context = {'results': results}
+                   
+
+        return render(request, self.template_name, context)  
+
+
+class Filter(View):
+    """View to filter the objects based on specific fields"""
+
+    template_name = 'filter.html'
+
+    def post(self, request, *args, **kwargs):
+        filter_form = FilterForm(request.POST)
+
+        if filter_form.is_valid():
+            cd = filter_form.cleaned_data
+            customer_name = cd['customer_name']
+            os_type = cd['os_type']
+            os_version = cd['os_version']
+            storage_adapter_vendor = cd['storage_adapter_vendor']
+            storage_adapter_model = cd['storage_adapter_model']
+            storage_adapter_driver = cd['storage_adapter_driver']
+            storage_adapter_firmware = cd['storage_adapter_firmware']
+            data_ontap_version = cd['data_ontap_version']
+
+
+        # show pre-filled forms with criteria from the form that triggered the POST
+        filter_form = FilterForm(initial=cd)        
+
+        # need to do the JOIN queries to check config details
+        results = EnablementRequest.objects.filter(customer_name__contains=customer_name,
+                                                   configuration_details__os_type__contains=os_type,
+                                                   configuration_details__os_version__contains=os_version,
+                                                   configuration_details__storage_adapter_vendor__contains=storage_adapter_vendor,
+                                                   configuration_details__storage_adapter_model__contains=storage_adapter_model,
+                                                   configuration_details__storage_adapter_driver__contains=storage_adapter_driver,
+                                                   configuration_details__storage_adapter_firmware__contains=storage_adapter_firmware,
+                                                   configuration_details__data_ontap_version__contains=data_ontap_version,)
+
+        context = {'results': results,
+                   'filter_form': filter_form,
+                   'request': request}
+
+        return render(request, self.template_name, context)
+
+
+    def get(self, request, *args, **kwargs):
+        filter_form = FilterForm()
+        context = {'filter_form': filter_form,
+                   'request': request,}
+
+        return render(request, self.template_name, context)
+        
 
 
 class ViewDetails(DetailView):
+    """View to show all details and comments of the items"""
+
     template_name = 'view.html'
     model = EnablementRequest
 
@@ -167,6 +227,10 @@ class ViewDetails(DetailView):
 
 
 class CommentInViewDetails(View):
+    """View to specifically handle POST method when hitting submit button,
+       after form processing, redirects back to the ViewDetails view.
+    """
+
     template_name = 'view.html'
     
     def post(self, request, *args, **kwargs):
@@ -193,6 +257,7 @@ class CommentInViewDetails(View):
 
 
 class ViewDetailsAndComments(View):
+    """View to direct traffic to appropriate views that handle POST vs. GET"""
 
     def get(self, request, *args, **kwargs):
         view = ViewDetails.as_view()
