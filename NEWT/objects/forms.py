@@ -112,13 +112,37 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ("text",)
 
-    def save(self, commit=True, enablement_request=None, commenter=None):
+    def save(self, commit=True, enablement_request=None, commenter=None,
+             pre_comment_state=None, post_comment_state=None):
+
         if commit:
-            comment = Comment(
-                enablement_request=enablement_request,
-                commenter=commenter,
-                text=self.cleaned_data['text']
-            )
+            comment = Comment(enablement_request=enablement_request,
+                              commenter=commenter,
+                              text=self.cleaned_data['text'])
+            if pre_comment_state and post_comment_state:
+                comment.pre_comment_state = pre_comment_state
+                comment.post_comment_state = post_comment_state
             comment.save()
 
+
+class RequestFeedbackForm(CommentForm):
+    STATE_CHANGE_CHOICES = (
+        ('', 'n/a'),
+        ('Sales Review', 'Sales Review'),
+        ('Engineering Review', 'Engineering Review'),
+        ('Support Review', 'Support Review'),
+    )
+    commenters_choice = forms.ChoiceField(label='Change "Current State"?', choices=STATE_CHANGE_CHOICES, required=False, help_text='(Optional)')
+
+    class Meta:
+        model = Comment
+        fields = ("commenters_choice", "text",)
+
+
+class ProvideFeedbackForm(RequestFeedbackForm):
+    STATE_CHANGE_CHOICES = (
+        ('', 'n/a'), 
+        ('Enablement Review', 'Enablement Review'),
+    )
+    commenters_choice = forms.ChoiceField(label='Change "Current State"?', choices=STATE_CHANGE_CHOICES, required=False, help_text='(Optional)')
 

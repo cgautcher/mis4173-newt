@@ -4,13 +4,14 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from django.views.generic import View, ListView, DetailView, FormView
-from django.views.generic.detail import SingleObjectMixin
 
 # My Stuff
 from forms import (InitiateEnablementRequestForm,
                    UpdateEnablementRequestForm,
                    ConfigurationDetailsForm,
-                   CommentForm,)
+                   CommentForm,
+                   RequestFeedbackForm,
+                   ProvideFeedbackForm,)
 
 from models import (EnablementRequest,
                     ConfigurationDetails,
@@ -27,8 +28,6 @@ class Initiate(View):
         config_details_form = ConfigurationDetailsForm(request.POST)
         comment_form = CommentForm(request.POST)
 
-        groups_of_request_user = request.user.groups.values_list('name', flat=True)
-
         if initiate_form.is_valid() and config_details_form.is_valid() and comment_form.is_valid():
             customer_name = initiate_form.cleaned_data['customer_name']
             configuration_details = config_details_form.save()
@@ -43,13 +42,11 @@ class Initiate(View):
             # set current_state to 'Enablement Review'
             current_state = 'Enablement Review'
 
-            enablement_request = EnablementRequest(
-                customer_name=customer_name,
-                parent_request=parent_request,
-                sales_initiator=request.user,
-                configuration_details=configuration_details,
-                current_state=current_state
-            )
+            enablement_request = EnablementRequest(customer_name=customer_name,
+                                                   parent_request=parent_request,
+                                                   sales_initiator=request.user,
+                                                   configuration_details=configuration_details,
+                                                   current_state=current_state)
 
             enablement_request.save()
             id = enablement_request.id
@@ -64,27 +61,22 @@ class Initiate(View):
 
             return HttpResponseRedirect(reverse('view', kwargs={'slug': slug}))
 
-        context = {
-            'initiate_form': initiate_form,
-            'config_details_form': config_details_form,
-            'comment_form': comment_form,
-            'groups_of_request_user': groups_of_request_user 
-        }
+        context = {'initiate_form': initiate_form,
+                   'config_details_form': config_details_form,
+                   'comment_form': comment_form,}
+
         return render(request, self.template_name, context)
+
             
     def get(self, request, *args, **kwargs):
         initiate_form = InitiateEnablementRequestForm()
         config_details_form = ConfigurationDetailsForm()
         comment_form = CommentForm()
 
-        groups_of_request_user = request.user.groups.values_list('name', flat=True)
+        context = {'initiate_form': initiate_form,
+                   'config_details_form': config_details_form,
+                   'comment_form': comment_form,}
 
-        context = {
-            'initiate_form': initiate_form,
-            'config_details_form': config_details_form,
-            'comment_form': comment_form,
-            'groups_of_request_user': groups_of_request_user 
-        }
         return render(request, self.template_name, context)
 
 
@@ -94,6 +86,7 @@ class Update(View):
     def post(self, request, *args, **kwargs):
         self.slug = self.kwargs['slug']
         enablement_request = EnablementRequest.objects.get(slug=self.slug)
+        pre_update_state = enablement_request.current_state
         old_configuration_details_id = enablement_request.configuration_details_id
 
         update_form = UpdateEnablementRequestForm(request.POST, instance=enablement_request)
@@ -110,18 +103,25 @@ class Update(View):
                 updated_enablement_request.parent_request = parent_request
                 updated_enablement_request.save()
             else:
-                update_form.save()
+                updated_enablement_request = update_form.save()
 
-            comment_form.save(enablement_request=enablement_request, commenter=request.user)
+            post_update_state = updated_enablement_request.current_state
+
+            if pre_update_state != post_update_state:
+                comment_form.save(enablement_request=enablement_request,
+                                  commenter=request.user,
+                                  pre_comment_state=pre_update_state,
+                                  post_comment_state=post_update_state)
+            else:
+                comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
             return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))
 
-        context = {
-            'enablement_request': enablement_request,
-            'update_form': update_form,
-            'config_details_form': config_details_form,
-            'comment_form': comment_form,
-        }
+        context = {'enablement_request': enablement_request,
+                   'update_form': update_form,
+                   'config_details_form': config_details_form,
+                   'comment_form': comment_form}
+
         return render(request, self.template_name, context)
 
     def get(self, request, *args, **kwargs):
@@ -133,12 +133,11 @@ class Update(View):
         config_details_form = ConfigurationDetailsForm(instance=configuration_details)
         comment_form = CommentForm()
 
-        context = {
-            'enablement_request': enablement_request,
-            'update_form': update_form,
-            'config_details_form': config_details_form,
-            'comment_form': comment_form,
-        }
+        context = {'enablement_request': enablement_request,
+                   'update_form': update_form,
+                   'config_details_form': config_details_form,
+                   'comment_form': comment_form}
+
         return render(request, self.template_name, context)
 
 
@@ -159,8 +158,11 @@ class ViewDetails(DetailView):
         context = super(ViewDetails, self).get_context_data()
         context['configuration_details'] = context['enablement_request'].configuration_details
         context['comments'] = context['enablement_request'].comment_set.all()
-        context['groups_of_request_user'] = self.request.user.groups.values_list('name', flat=True)
-        context['comment_form'] = CommentForm()
+        enablement_user_list = User.objects.filter(groups__name='Enablement')
+        if self.request.user in enablement_user_list:
+            context['comment_form'] = RequestFeedbackForm()
+        else:
+            context['comment_form'] = ProvideFeedbackForm()
         return context
 
 
@@ -168,11 +170,25 @@ class CommentInViewDetails(View):
     template_name = 'view.html'
     
     def post(self, request, *args, **kwargs):
-        comment_form = CommentForm(request.POST)
+        enablement_user_list = User.objects.filter(groups__name='Enablement')
+        if request.user in enablement_user_list:
+            comment_form = RequestFeedbackForm(request.POST)
+        else:
+            comment_form = ProvideFeedbackForm(request.POST)
         if comment_form.is_valid():
             enablement_request_slug = request.POST['er_slug']
             enablement_request = EnablementRequest.objects.get(slug=enablement_request_slug)
-            comment_form.save(enablement_request=enablement_request, commenter=request.user)
+            if request.POST['commenters_choice'] and (request.POST['commenters_choice'] != enablement_request.current_state):
+                pre_comment_state = enablement_request.current_state
+                post_comment_state = request.POST['commenters_choice']
+                comment_form.save(enablement_request=enablement_request,
+                                  commenter=request.user,
+                                  pre_comment_state=pre_comment_state,
+                                  post_comment_state=post_comment_state)
+                enablement_request.current_state = post_comment_state
+                enablement_request.save()
+            else:
+                comment_form.save(enablement_request=enablement_request, commenter=request.user)
             return HttpResponseRedirect(reverse('view', kwargs={'slug': enablement_request_slug}))
 
 

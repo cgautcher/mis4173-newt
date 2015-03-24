@@ -28,6 +28,9 @@
               <hr>
               <p>Submitted on: {{ comment.timestamp }}</p>
               <p>Submitted by: {{ comment.commenter }}</p>
+              {% if comment.pre_comment_state and comment.post_comment_state %}
+                  <p>State Change: {{ comment.pre_comment_state }} ---> {{ comment.post_comment_state }}</p>
+              {% endif %}
               <p>Comment: {{ comment.text  }}</p>
             {% endfor %}
 

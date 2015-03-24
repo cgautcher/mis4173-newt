@@ -86,5 +86,5 @@ class Comment(models.Model):
         ('Completed', 'Completed'),
     )
 
-    pre_comment_state = models.CharField(max_length=3, choices=ALLOWED_STATES, null=True, blank=True)
-    post_comment_state = models.CharField(max_length=3, choices=ALLOWED_STATES, null=True, blank=True)
+    pre_comment_state = models.CharField(max_length=32, choices=ALLOWED_STATES, null=True, blank=True)
+    post_comment_state = models.CharField(max_length=32, choices=ALLOWED_STATES, null=True, blank=True)
