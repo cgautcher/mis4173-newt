@@ -179,7 +179,7 @@ class Locate(View):
  
     def post(self, request, *args, **kwargs):
         locate_identifier = request.POST['locate_identifier']
-        results = EnablementRequest.objects.filter(identifier__contains=locate_identifier)
+        results = EnablementRequest.objects.filter(identifier__contains=locate_identifier).order_by('-identifier')
         group_membership = request.user.groups.values_list('name',flat=True)
         if 'Enablement' in group_membership:
             navbar_options_template = 'enablement_navbar_options.html'
@@ -233,7 +233,8 @@ class Filter(View):
                                                    config_details__storage_adapter_model__contains=storage_adapter_model,
                                                    config_details__storage_adapter_driver__contains=storage_adapter_driver,
                                                    config_details__storage_adapter_firmware__contains=storage_adapter_firmware,
-                                                   config_details__data_ontap_version__contains=data_ontap_version,)
+                                                   config_details__data_ontap_version__contains=data_ontap_version,
+                                               ).order_by('-identifier')
 
         context = {'results': results,
                    'filter_form': filter_form,
