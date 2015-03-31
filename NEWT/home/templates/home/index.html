@@ -10,33 +10,13 @@
     </div>
 
     <div class="container">
+      <div class="row">
     {% if user.is_authenticated %}
-      <!-- Example row of columns -->
-      <div class="row">
-        <h2 style="color: red;"><u>Waiting for Action:</u></h2>
-        <div class="well  col-lg-8" style="background: #E9EAEB; max-height: 150px; overflow-y:scroll;">
-          <table class="table table-striped">
-            <thead><tr style="padding-left: 10%; font-size: large;">
-              <th>ID</th>
-              <th>Customer Name</th>
-              <th>Short Term Revenue</th>
-            </tr></thead>
-            <tbody>  
-          {% for object in object_list_review %}
-            <tr>
-              <td><a href="{{ object.get_absolute_url }}">{{ object.identifier }}</a></td>
-              <td>{{ object.customer_name }}</td>
-              <td>${{ object.short_term_revenue|intcomma }}</td>
-            </tr>
-          {% endfor %}
-          </table>
-        </div>
-      </div>
+        <h3>You're a generic user, so you can only view Enablement Requests via the "Locate" search box</h3>
     {% else %}
-      <div class="row">
         <h3>You can Log In, or Register, or just browse the Enablement Requests via the "Locate" search box</h3>
-      </div>
     {% endif %}
+      </div>
 
 
 {% endblock %}

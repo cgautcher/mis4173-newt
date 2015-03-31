@@ -31,6 +31,10 @@
       <p class="lead col-md-3 text-right">${{ enablement_request.short_term_revenue|intcomma }}</p>
     </div>
     <div class="row">
+      <p class="lead col-md-4">Sales Initiator:</p>
+      <p class="lead col-md-3 text-right">{{ enablement_request.sales_initiator.username }}</p>
+    </div>
+    <div class="row">
       <p class="lead col-md-4">Submitted on:</p>
       <p class="lead col-md-3 text-right">{{ enablement_request.creation_timestamp }}</p>
     </div>

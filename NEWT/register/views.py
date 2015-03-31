@@ -38,6 +38,9 @@ class Register(View):
             
             return HttpResponseRedirect('/')
 
+        context = {'user_create_form': user_create_form, 'account_registration_form': account_registration_form}
+        return render(request, self.template_name, context)
+
             
     def get(self, request):
         user_create_form = UserCreationWithEmailFieldForm()

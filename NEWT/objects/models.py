@@ -19,7 +19,7 @@ class EnablementRequest(models.Model):
         ('Sales Review', 'Sales Review'),
         ('Engineering Review', 'Engineering Review'),
         ('Support Review', 'Support Review'),
-        ('Accepted In-progress', 'Accepted In-progress'),
+        ('Accepted - In Progress', 'Accepted - In Progress'),
         ('Rejected', 'Rejected'),
         ('Completed', 'Completed'),
     )

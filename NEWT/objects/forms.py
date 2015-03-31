@@ -1,12 +1,14 @@
 from django import forms
+
 from django.contrib.auth.models import Group, User
 from django.db.models.base import ObjectDoesNotExist
 
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field, Fieldset
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
-
 from models import EnablementRequest, ConfigDetails, Comment
+
+
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Reset, Row, Field, Fieldset
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 
 class InitiateForm(forms.Form):
@@ -48,7 +50,8 @@ class FilterForm(forms.Form):
             'data_ontap_version',
         ),
         Div(
-               Submit('submit', 'Filter'),
+               Reset('Reset The Form', 'Reset', css_class='btn btn-danger'),
+               Submit('submit', 'Filter', css_class='btn btn-success'),
                css_class='col-lg-7 text-right',
            ),
     )
@@ -206,8 +209,8 @@ class CommentForm(forms.ModelForm):
        Fieldset('Comments',
            'text',
            Div(
-               Button('cancel', 'Cancel', onclick='history.go(-1);'),
-               Submit('submit', 'Submit'),
+               Button('cancel', 'Cancel', onclick='history.go(-1);', css_class='btn btn-danger'),
+               Submit('submit', 'Submit', css_class='btn btn-success'),
                css_class='col-lg-7 text-right',
            ),
        ),
@@ -244,8 +247,8 @@ class RequestFeedbackForm(CommentForm):
        'commenters_choice',
        'text',
        Div(
-           Button('cancel', 'Cancel'),
-           Submit('submit', 'Submit'),
+           Reset('reset the form', 'Cancel', css_class='btn btn-danger'),
+           Submit('submit', 'Submit', css_class='btn btn-success'),
            css_class='col-lg-8 text-right',
        ),
     )
