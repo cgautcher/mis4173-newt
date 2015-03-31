@@ -1,26 +1,76 @@
 {% load staticfiles %}
+
 <html>
   <head>
-    <a href="{% url 'home' %}">NEWT</a>
-    <link href="{% static 'css/default.css' %}"
-          rel="stylesheet" media="screen">
+    <link href="{% static 'css/bootstrap.min.css' %}" rel="stylesheet">
 
-    {% if user.is_authenticated %}
-        Welcome {{ user.username }} / <a href="{% url 'logout' %}">Log Out</a>
-    {% else %}
-        <a href="{% url 'login' %}">Log In</a> / <a href="{% url 'register' %}">Register</a>
-    {% endif %}
-
-    <form action="{% url 'locate' %}" method="post">{% csrf_token %}
-        <input type="text" name="locate_identifier">
-        <input type="submit" value="Locate">
-    </form>
-
+    <link href="{% static 'css/jumbotron.css' %}" rel="stylesheet">
   </head>
 
   <body>
+
+    <nav class="navbar navbar-inverse">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="{% url 'home' %}"><b style="color:white;">NEWT</b></a>
+        </div>
+
+        {% if navbar_options_template %}
+          {% include navbar_options_template %}
+        {% endif %}
+
+        <div id="navbar" class="navbar-collapse collapse">
+          <form class="navbar-form navbar-right" action="{% url 'locate' %}" method="post">
+            {% csrf_token %}
+            <div class="form-group">
+              <input type="text" class="form-control" name="locate_identifier">
+            </div>
+            <button type="submit" class="btn btn-success">Locate</button>
+          </form>
+
+          <div class="nav navbar-text navbar-right"> 
+            {% if user.is_authenticated %}
+                <p style="color: white;">Welcome {{ user.username }} 
+                {% if group_membership %}
+                    {% for group in group_membership %}
+                        / {{ group }}
+                    {% endfor %}
+                {% endif %}
+                 / <a href="{% url 'logout' %}">Log Out</a>
+                </p> 
+            {% else %}
+                <a href="{% url 'login' %}">Log In</a> / <a href="{% url 'register' %}">Register</a>
+            {% endif %}
+          </div>
+
+        </div><!--/.navbar-collapse -->
+      </div>
+    </nav>
+
+
     {% block content %}
     {% endblock %}
+
+      <hr>
+
+      <footer>
+        <p>&copy; NetApp 2015</p>
+      </footer>
+    </div> <!-- /container -->
+
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+    <script src="{% static 'js/bootstrap.min.js'></script>
+
 
   </body>
 </html>

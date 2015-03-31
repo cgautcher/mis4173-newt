@@ -2,22 +2,67 @@ from django import forms
 from django.contrib.auth.models import Group, User
 from django.db.models.base import ObjectDoesNotExist
 
-from models import EnablementRequest, ConfigurationDetails, Comment
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Row, Field, Fieldset
+from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
+
+from models import EnablementRequest, ConfigDetails, Comment
 
 
-class InitiateEnablementRequestForm(forms.Form):
+class InitiateForm(forms.Form):
+
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-3'
+    helper.field_class = 'col-lg-4'
+    helper.layout = Layout(
+        Fieldset('Customer Details',
+            'customer_name',
+            'short_term_revenue',
+        ),
+    )
+    
+
+
     customer_name = forms.CharField(label='Customer Name')
+    short_term_revenue = forms.IntegerField(label='Short Term Revenue')
+
 
 class FilterForm(forms.Form):
-    customer_name = forms.CharField(label='Customer Name', required=False)
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-3'
+    helper.field_class = 'col-lg-4'
+    helper.layout = Layout(
+        Fieldset('Enablement Request Details',
+            'customer_name',
+            'short_term_revenue',
+        ),
+        Fieldset('Configuration Details',
+            'os_type',
+            'os_version',
+            'storage_adapter_vendor',
+            'storage_adapter_model',
+            'storage_adapter_driver',
+            'storage_adapter_firmware',
+            'data_ontap_version',
+        ),
+        Div(
+               Submit('submit', 'Filter'),
+               css_class='col-lg-7 text-right',
+           ),
+    )
 
-    os_type_list = list(ConfigurationDetails.OS_TYPES)
+
+    customer_name = forms.CharField(label='Customer Name', required=False)
+    short_term_revenue = forms.IntegerField(label='Short Term Revenue')
+    os_type_list = list(ConfigDetails.OS_TYPES)
     os_type_list.insert(0, ('','----'))
     os_type = forms.ChoiceField(label='OS Type', choices=os_type_list, required=False)
 
     os_version = forms.CharField(label='OS Version', required=False)
 
-    storage_adapter_vendor_list = list(ConfigurationDetails.STORAGE_ADAPTER_VENDORS)
+    storage_adapter_vendor_list = list(ConfigDetails.STORAGE_ADAPTER_VENDORS)
     storage_adapter_vendor_list.insert(0, ('','----'))
     storage_adapter_vendor = forms.ChoiceField(label='Storage Adapter Vendor', choices=storage_adapter_vendor_list, required=False)
 
@@ -27,8 +72,24 @@ class FilterForm(forms.Form):
     data_ontap_version = forms.CharField(label='Data ONTAP Version', required=False)
 
 
-class UpdateEnablementRequestForm(forms.ModelForm):
+class UpdateForm(forms.ModelForm):
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-3'
+    helper.field_class = 'col-lg-4'
+    helper.layout = Layout(
+        Fieldset('Enablement Request Details',
+            'customer_name',
+            'short_term_revenue',
+            'current_state',
+            'parent_request',
+            'assigned_engineer',
+        ),
+    )
+    
+
     customer_name = forms.CharField(label='Customer Name')
+    short_term_revenue = forms.IntegerField(label='Short Term Revenue')
     current_state = forms.ChoiceField(label='Current State', choices=EnablementRequest.ALLOWED_STATES)
     parent_request = forms.CharField(label='Parent Request', required=False)
 
@@ -39,6 +100,7 @@ class UpdateEnablementRequestForm(forms.ModelForm):
         model = EnablementRequest
         fields = (
             "customer_name",
+            "short_term_revenue",
             "current_state",
             "parent_request",
             "assigned_engineer",
@@ -46,7 +108,7 @@ class UpdateEnablementRequestForm(forms.ModelForm):
 
     def clean(self):
         #run the standard clean method first
-        cleaned_data=super(UpdateEnablementRequestForm, self).clean()
+        cleaned_data=super(UpdateForm, self).clean()
 
         assigned_engineer_id = cleaned_data['assigned_engineer']
         assigned_engineer_instance = User.objects.get(id=assigned_engineer_id)
@@ -63,17 +125,25 @@ class UpdateEnablementRequestForm(forms.ModelForm):
         return cleaned_data
 
 
-class ConfigurationDetailsForm(forms.ModelForm):
-    os_type = forms.ChoiceField(label='OS Type', choices=ConfigurationDetails.OS_TYPES)
+class ConfigDetailsForm(forms.ModelForm):
+
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-3'
+    helper.field_class = 'col-lg-4'
+    helper.layout = Layout(
+    )
+
+    os_type = forms.ChoiceField(label='OS Type', choices=ConfigDetails.OS_TYPES)
     os_version = forms.CharField(label='OS Version')
-    storage_adapter_vendor = forms.ChoiceField(label='Storage Adapter Vendor', choices=ConfigurationDetails.STORAGE_ADAPTER_VENDORS)
+    storage_adapter_vendor = forms.ChoiceField(label='Storage Adapter Vendor', choices=ConfigDetails.STORAGE_ADAPTER_VENDORS)
     storage_adapter_model = forms.CharField(label='Storage Adapter Model')
     storage_adapter_driver = forms.CharField(label='Storage Adapter Driver')
     storage_adapter_firmware = forms.CharField(label='Storage Adapter Firmware')
     data_ontap_version = forms.CharField(label='Data ONTAP Version')
 
     class Meta:
-        model = ConfigurationDetails
+        model = ConfigDetails
         fields = (
             "os_type",
             "os_version",
@@ -83,6 +153,7 @@ class ConfigurationDetailsForm(forms.ModelForm):
             "storage_adapter_firmware",
             "data_ontap_version",
         )
+
 
     # override save() in order to return existing instance if no changes during UpdateEnablementRequestForm,
     # + or if a new ER has the exact same configuration, use existing instance 
@@ -101,7 +172,7 @@ class ConfigurationDetailsForm(forms.ModelForm):
             # + if not, it will raise an exception, which we will catch,
             # + and it will add the new instance instead of erroring out
             try:
-                instance = ConfigurationDetails.objects.get(os_type=os_type_value,
+                instance = ConfigDetails.objects.get(os_type=os_type_value,
                                                             os_version=os_version_value,
                                                             storage_adapter_vendor=storage_adapter_vendor_value,
                                                             storage_adapter_model=storage_adapter_model_value,
@@ -109,15 +180,15 @@ class ConfigurationDetailsForm(forms.ModelForm):
                                                             storage_adapter_firmware=storage_adapter_firmware_value,
                                                             data_ontap_version=data_ontap_version_value)
             except ObjectDoesNotExist: 
-                configuration_details = ConfigurationDetails(os_type=os_type_value,
+                config_details = ConfigDetails(os_type=os_type_value,
                                                              os_version=os_version_value,
                                                              storage_adapter_vendor=storage_adapter_vendor_value,
                                                              storage_adapter_model=storage_adapter_model_value,
                                                              storage_adapter_driver=storage_adapter_driver_value,
                                                              storage_adapter_firmware=storage_adapter_firmware_value,
                                                              data_ontap_version=data_ontap_version_value)
-                configuration_details.save()
-                return configuration_details
+                config_details.save()
+                return config_details
 
 
             # if the exception above did not get raised, return instance
@@ -127,9 +198,26 @@ class ConfigurationDetailsForm(forms.ModelForm):
 class CommentForm(forms.ModelForm):
     text = forms.CharField(label="", widget=forms.Textarea)
 
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-2'
+    helper.field_class = 'col-lg-7'
+    helper.layout = Layout(
+       Fieldset('Comments',
+           'text',
+           Div(
+               Button('cancel', 'Cancel', onclick='history.go(-1);'),
+               Submit('submit', 'Submit'),
+               css_class='col-lg-7 text-right',
+           ),
+       ),
+    )
+
+
     class Meta:
         model = Comment
         fields = ("text",)
+
 
     def save(self, commit=True, enablement_request=None, commenter=None,
              pre_comment_state=None, post_comment_state=None):
@@ -144,7 +232,26 @@ class CommentForm(forms.ModelForm):
             comment.save()
 
 
+
 class RequestFeedbackForm(CommentForm):
+    text = forms.CharField(label="Comment", widget=forms.Textarea)
+
+    helper = FormHelper()
+    helper.form_tag = False
+    helper.label_class = 'col-lg-2'
+    helper.field_class = 'col-lg-6'
+    helper.layout = Layout(
+       'commenters_choice',
+       'text',
+       Div(
+           Button('cancel', 'Cancel'),
+           Submit('submit', 'Submit'),
+           css_class='col-lg-8 text-right',
+       ),
+    )
+
+
+
     STATE_CHANGE_CHOICES = (
         ('', 'n/a'),
         ('Sales Review', 'Sales Review'),
@@ -159,9 +266,10 @@ class RequestFeedbackForm(CommentForm):
 
 
 class ProvideFeedbackForm(RequestFeedbackForm):
+
     STATE_CHANGE_CHOICES = (
         ('', 'n/a'), 
         ('Enablement Review', 'Enablement Review'),
     )
-    commenters_choice = forms.ChoiceField(label='Change "Current State"?', choices=STATE_CHANGE_CHOICES, required=False, help_text='(Optional)')
+    commenters_choice = forms.ChoiceField(label='Change "Current State"?', choices=STATE_CHANGE_CHOICES, required=False)
 

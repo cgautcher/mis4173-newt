@@ -1,8 +1,35 @@
 {% extends "base.html" %}
+{% load humanize %}
 
 {% block content %}
+    <!-- Main jumbotron for a primary marketing message or call to action -->
+    <div class="jumbotron">
+      <div class="container">
+        <h1><i>Welcome</i> to NEWT</h1>
+      </div>
+    </div>
 
-<p>Welcome to the shredgnar zone, bro ... I mean {{ user }}
+    <div class="container">
+    {% if user.is_authenticated %}
+      <!-- Example row of columns -->
+      <div class="row">
+        <h2 style="color: red;"><u>Waiting for Action:</u></h2>
+        <div class="well  col-lg-8" style="background: #E9EAEB; max-height: 150px; overflow-y:scroll;">
+          {% for object in object_list_review %}
+            <p style="padding-left: 10%; font-size: large;">
+              <a href="{{ object.get_absolute_url }}">
+                {{ object.identifier }} - {{ object.customer_name }} - ${{ object.short_term_revenue|intcomma }}
+              </a>
+            </p>
+          {% endfor %}
+        </div>
+      </div>
+    {% else %}
+      <div class="row">
+        <h3>You can Log In, or Register, or just browse the Enablement Requests via the "Locate" search box</h3>
+      </div>
+    {% endif %}
+
 
 {% endblock %}
 

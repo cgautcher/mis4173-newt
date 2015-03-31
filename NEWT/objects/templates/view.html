@@ -1,55 +1,97 @@
 {% extends "base.html" %}
+{% load humanize %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-  <h2>Enablement Request - {{ enablement_request.identifier }}</h2>
-    <p>Enablement Request: {{ enablement_request.identifier }}</p>
 
+    <div class="jumbotron">
+      <div class="container">
+        <div class="row">
+          <h3 class="col-lg-4">Enablement Request:</h3>
+          <h3 class="col-lg-3 text-right">{{ enablement_request.identifier }}</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
     {% if enablement_request.parent_identifier %}
-        <p>Parent Identifier: {{ enablement_request.parent_identifier }}</p>
+        <div class="row">
+          <p class="lead col-md-4">Parent Identifier:</p>
+          <p class="lead col-md-3">{{ enablement_request.parent_identifier }}</p>
+        </div>
     {% endif %}
 
-    <p>Customer Name: {{ enablement_request.customer_name }}</p>
-    <p>Submitted on: {{ enablement_request.creation_timestamp }}</p>
-    <p>Current State: {{ enablement_request.current_state }}</p>
-    <p>OS Type: {{ configuration_details.os_type }}</p>
-    <p>OS Version: {{ configuration_details.os_version }}</p>
-    <p>Storage Adapter Vendor: {{ configuration_details.storage_adapter_vendor }}</p>
-    <p>Storage Adapter Model: {{ configuration_details.storage_adapter_model }}</p>
-    <p>Storage Adapter Driver: {{ configuration_details.storage_adapter_driver }}</p>
-    <p>Storage Adapter Firmware: {{ configuration_details.storage_adapter_firmware }}</p>
-    <p>Data ONTAP Version: {{ configuration_details.data_ontap_version }}</p>
 
-    <br></br>
+    <div class="row">
+      <p class="lead col-md-4">Customer Name:</p>
+      <p class="lead col-md-3 text-right">{{ enablement_request.customer_name }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Short Term Revenue:</p>
+      <p class="lead col-md-3 text-right">${{ enablement_request.short_term_revenue|intcomma }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Submitted on:</p>
+      <p class="lead col-md-3 text-right">{{ enablement_request.creation_timestamp }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Current State:</p>
+      <p class="lead col-md-3 text-right">{{ enablement_request.current_state }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">OS Type:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.os_type }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">OS Version:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.os_version }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Storage Adapter Vendor:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.storage_adapter_vendor }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Storage Adapter Model:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.storage_adapter_model }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Storage Adapter Driver:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.storage_adapter_driver }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Storage Adapter Firmware:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.storage_adapter_firmware }}</p>
+    </div>
+    <div class="row">
+      <p class="lead col-md-4">Data ONTAP Version:</p>
+      <p class="lead col-md-3 text-right">{{ config_details.data_ontap_version }}</p>
+    </div>
+
 
     {% if user.is_authenticated %}
         <h2>Comments</h2>
-
+        <hr>
             {% for comment in comments %}
-              <hr>
-              <p>Submitted on: {{ comment.timestamp }}</p>
-              <p>Submitted by: {{ comment.commenter }}</p>
-              {% if comment.pre_comment_state and comment.post_comment_state %}
-                  <p>State Change: {{ comment.pre_comment_state }} ---> {{ comment.post_comment_state }}</p>
-              {% endif %}
-              <p>Comment: {{ comment.text  }}</p>
+              <div class="row">
+                <div class="well col-lg-8">
+                <p>Submitted on: {{ comment.timestamp }}</p>
+                <p>Submitted by: {{ comment.commenter }}</p>
+                {% if comment.pre_comment_state and comment.post_comment_state %}
+                    <p>State Change: {{ comment.pre_comment_state }} ---> {{ comment.post_comment_state }}</p>
+                {% endif %}
+                <p>Comment: {{ comment.text  }}</p>
+                </div>
+              </div>
             {% endfor %}
 
         <hr>
         <h3>Add Comment:</h3>
-        <form action="" method="post">{% csrf_token %}
-            {{ comment_form.as_p }}
+        <form action="" method="post" class="form-horizontal">
+            {% crispy comment_form %}
             <input type='hidden' name="er_slug" value="{{ enablement_request.slug }}" />
 
-            <a href="{{ enablement_request.get_absolute_url }}">
-              <input type="button" value="Cancel" />
-            </a>
-
-            <input type="submit" value="Submit" />
         </form>
- 
-
-
+        <br>
     {% endif %}
-
 
 {% endblock %}

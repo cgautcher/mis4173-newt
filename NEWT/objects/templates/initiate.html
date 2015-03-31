@@ -1,17 +1,25 @@
 {% extends "base.html" %}
+{% load crispy_forms_tags %}
 
 {% block content %}
-        <p>Please fill out the following information and click submit:</p>
+    <div class="jumbotron">
+      <div class="container">
+        <div class="row">
+          <h2 class="col-lg-6">Initiate Enablement Request</h2>
+        </div>
+        <br>
+        <div class="row">
+          <h4 class="col-lg-6" style="padding-left: 5%;">Please fill out the fields and click Submit:</h4>
+        </div>
+      </div>
+    </div>
 
-        <form action="" method="post">{% csrf_token %}
-            {{ initiate_form.as_p }}
-            {{ config_details_form.as_p }}
-            {{ comment_form.as_p }}
 
-            <a href="{% url 'home' %}">
-              <input type="button" value="Cancel" />
-            </a>
-
-            <input type="submit" value="Submit" />
-        </form>
+    <div class="container">
+    <form action="" method="post" class="form-horizontal">
+        {% crispy initiate_form %}    
+        {% crispy config_details_form %}
+        {% crispy comment_form %}
+    </form>
+                
 {% endblock %}

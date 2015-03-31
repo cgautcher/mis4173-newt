@@ -6,16 +6,11 @@ from django.contrib.auth.models import User
 
 
 class EnablementRequest(models.Model):
-    identifier = models.CharField(max_length=9, unique=True, blank=True)
-    parent_request = models.CharField(max_length=9, null=True, blank=True)    
-    slug = models.SlugField(max_length=9, unique=True, blank=True)
+    # things that will be entered as input from the users
     customer_name = models.CharField(max_length=100)
-    creation_timestamp = models.DateTimeField(auto_now_add=True)
-    configuration_details = models.ForeignKey('ConfigurationDetails', null=True)
-
-    sales_initiator = models.ForeignKey(User, null=True,
-        limit_choices_to= Q( groups__name = 'Sales'), related_name='sales_representative')
-
+    short_term_revenue = models.IntegerField(default='0')
+    parent_request = models.CharField(max_length=9, null=True, blank=True)    
+    
     assigned_engineer = models.ForeignKey(User, null=True, blank=True, unique=False,
         limit_choices_to= Q( groups__name = 'Enablement'), related_name='enablement_engineer')
 
@@ -31,12 +26,32 @@ class EnablementRequest(models.Model):
 
     current_state = models.CharField(max_length=32, choices=ALLOWED_STATES)
 
+    # Things that get set automatically
+    creation_timestamp = models.DateTimeField(auto_now_add=True)
+    config_details = models.ForeignKey('ConfigDetails', null=True)
+
+    sales_initiator = models.ForeignKey(User, null=True,
+        limit_choices_to= Q( groups__name = 'Sales'), related_name='sales_representative')
+
+    identifier = models.CharField(max_length=9, unique=True, blank=True)
+    slug = models.SlugField(max_length=9, unique=True, blank=True)
+    
+
+    # return the view path to the object.
+    # + example: "/view/er-000123"
     def get_absolute_url(self):
         from django.core.urlresolvers import reverse
         return reverse('view', kwargs={'slug': self.slug})
 
+    # return the update path to the object.
+    # + example: "/update/er-000123"
+    def get_update_url(self):
+        from django.core.urlresolvers import reverse
+        return reverse('update', kwargs={'slug': self.slug})
 
-class ConfigurationDetails(models.Model):
+    
+
+class ConfigDetails(models.Model):
 
     OS_TYPES = (
         ('Windows Server', 'Windows Server'),
