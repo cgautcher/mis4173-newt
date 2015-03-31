@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+
+    <div class="jumbotron">
+      <div class="container">
+        <div class="row">
+          <h3>Please fill out the desired fields to search and click submit:</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+        <form action="" method="post" class="form-horizontal">
+            {% crispy filter_form %}
+            <br>
+        </form>
+        <br>
+
+        {% if request.POST %}
+          {% if not results %}
+            <h4>Sorry, but there were no matching Enablement Requests!</h4>
+          {% else %}
+          <div class="well" style="max-height: 800px; overflow-y:scroll;">
+            <table class="table table-striped">
+              <thead><tr>
+                <th>ID</th>
+                <th>Customer</th>
+                <th>Short Term Revenue</th>
+                <th>OS Type</th>
+                <th>OS Version</th>
+                <th>Adapter Vendor</th>
+                <th>Adapter Model</th>
+                <th>Adapter Driver</th>
+                <th>Adapter Firmware</th>
+                <th>Data ONTAP</th>
+              </tr></thead>
+              <tbody>
+              {% for result in results %}
+                  <tr>
+                    <td><a href="{{ result.get_absolute_url }}">{{ result.identifier }}</a></td>
+                    <td>{{ result.customer_name }}</td>
+                    <td>${{ result.short_term_revenue|intcomma }}</td>
+                    {% with config=result.config_details %}
+                      <td>{{ config.os_type }}</td>
+                      <td>{{ config.os_version }}</td>
+                      <td>{{ config.storage_adapter_vendor }}</td>
+                      <td>{{ config.storage_adapter_model }}</td>
+                      <td>{{ config.storage_adapter_driver }}</td>
+                      <td>{{ config.storage_adapter_firmware }}</td>
+                      <td>{{ config.data_ontap_version }}</td>
+                    {% endwith %}
+                  </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% endif %}
+        {% endif %}
+{% endblock %}

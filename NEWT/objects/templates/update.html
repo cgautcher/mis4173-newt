@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="jumbotron">
+      <div class="container">
+        <div class="row">
+          <h2 class="col-lg-6">Update Enablement Request</h2>
+        </div>
+        <br>
+        <div class="row">
+          <h4 class="col-lg-6" style="padding-left: 5%;">Please fill out the fields and click Submit:</h4>
+        </div>
+      </div>
+    </div>
+
+
+    <div class="container">
+    <form action="" method="post" class="form-horizontal">
+        {% crispy update_form %}    
+        {% crispy config_details_form %}
+        {% crispy comment_form %}
+    </form>
+ 
+
+{% endblock %}
