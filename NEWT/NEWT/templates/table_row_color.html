@@ -1,0 +1,33 @@
+
+
+
+                            {% with group=user.groups.values_list|first %}
+                                {% if 'Enablement' in group %}
+                                    {% if object.current_state == 'Enablement Review' %}                              
+                                        <tr class="bg-danger">
+                                    {% elif object.current_state == 'Sales Review' %}                              
+                                        <tr class="bg-info">
+                                    {% elif object.current_state == 'Engineering Review' %}                              
+                                        <tr class="bg-info">
+                                    {% elif object.current_state == 'Support Review' %}                              
+                                        <tr class="bg-info">
+                                    {% endif %} 
+                                {% elif 'Sales' in group %}
+                                    {% if object.current_state == 'Enablement Review' %}                              
+                                        <tr class="bg-info">
+                                    {% elif object.current_state == 'Sales Review' %}                              
+                                        <tr class="bg-danger">
+                                    {% elif object.current_state == 'Engineering Review' %}                              
+                                        <tr class="bg-info">
+                                    {% elif object.current_state == 'Support Review' %}                              
+                                        <tr class="bg-info">
+                                    {% endif %} 
+                                {% endif %} 
+                                {% if object.current_state == 'Completed' %}                              
+                                    <tr class="bg-success">
+                                {% elif object.current_state == 'Accepted - In Progress' %}                            
+                                    <tr class="bg-warning">
+                                {% elif object.current_state == 'Rejected' %}                              
+                                    <tr style="background: white">
+                                {% endif %} 
+                            {% endwith %} 

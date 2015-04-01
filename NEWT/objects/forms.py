@@ -8,7 +8,6 @@ from models import EnablementRequest, ConfigDetails, Comment
 
 from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Div, Submit, HTML, Button, Reset, Row, Field, Fieldset
-from crispy_forms.bootstrap import AppendedText, PrependedText, FormActions
 
 
 class InitiateForm(forms.Form):
@@ -39,6 +38,7 @@ class FilterForm(forms.Form):
         Fieldset('Enablement Request Details',
             'customer_name',
             'short_term_revenue',
+            'current_state',
         ),
         Fieldset('Configuration Details',
             'os_type',
@@ -58,7 +58,12 @@ class FilterForm(forms.Form):
 
 
     customer_name = forms.CharField(label='Customer Name', required=False)
-    short_term_revenue = forms.IntegerField(label='Short Term Revenue')
+    short_term_revenue = forms.IntegerField(label='Short Term Revenue', initial=0)
+    current_state_list = list(EnablementRequest.ALLOWED_STATES)
+    current_state_list.insert(0, ('','----'))
+
+    current_state = forms.ChoiceField(label='Current State', choices=current_state_list, required=False)
+
     os_type_list = list(ConfigDetails.OS_TYPES)
     os_type_list.insert(0, ('','----'))
     os_type = forms.ChoiceField(label='OS Type', choices=os_type_list, required=False)

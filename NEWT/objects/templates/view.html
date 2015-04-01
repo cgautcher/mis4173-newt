@@ -8,39 +8,39 @@
       <div class="container">
         <div class="row">
           <h3 class="col-lg-4">Enablement Request:</h3>
-          <h3 class="col-lg-3 text-right">{{ enablement_request.identifier }}</h3>
+          <h3 class="col-lg-3 text-right">{{ object.identifier }}</h3>
         </div>
       </div>
     </div>
 
     <div class="container">
-    {% if enablement_request.parent_identifier %}
+    {% if object.parent_identifier %}
         <div class="row">
           <p class="lead col-md-4">Parent Identifier:</p>
-          <p class="lead col-md-3">{{ enablement_request.parent_identifier }}</p>
+          <p class="lead col-md-3">{{ object.parent_identifier }}</p>
         </div>
     {% endif %}
 
 
     <div class="row">
       <p class="lead col-md-4">Customer Name:</p>
-      <p class="lead col-md-3 text-right">{{ enablement_request.customer_name }}</p>
+      <p class="lead col-md-3 text-right">{{ object.customer_name }}</p>
     </div>
     <div class="row">
       <p class="lead col-md-4">Short Term Revenue:</p>
-      <p class="lead col-md-3 text-right">${{ enablement_request.short_term_revenue|intcomma }}</p>
+      <p class="lead col-md-3 text-right">${{ object.short_term_revenue|intcomma }}</p>
     </div>
     <div class="row">
       <p class="lead col-md-4">Sales Initiator:</p>
-      <p class="lead col-md-3 text-right">{{ enablement_request.sales_initiator.username }}</p>
+      <p class="lead col-md-3 text-right">{{ object.sales_initiator.username }}</p>
     </div>
     <div class="row">
       <p class="lead col-md-4">Submitted on:</p>
-      <p class="lead col-md-3 text-right">{{ enablement_request.creation_timestamp }}</p>
+      <p class="lead col-md-3 text-right">{{ object.creation_timestamp }}</p>
     </div>
     <div class="row">
       <p class="lead col-md-4">Current State:</p>
-      <p class="lead col-md-3 text-right">{{ enablement_request.current_state }}</p>
+      <p class="lead col-md-3 text-right">{{ object.current_state }}</p>
     </div>
     <div class="row">
       <p class="lead col-md-4">OS Type:</p>
@@ -75,7 +75,7 @@
     {% if user.is_authenticated %}
         <h2>Comments</h2>
         <hr>
-            {% for comment in comments %}
+            {% for comment in object.comment_set.all %}
               <div class="row">
                 <div class="well col-lg-8">
                 <p>Submitted on: {{ comment.timestamp }}</p>
@@ -89,13 +89,15 @@
             {% endfor %}
 
         <hr>
-        <h3>Add Comment:</h3>
-        <form action="" method="post" class="form-horizontal">
-            {% crispy comment_form %}
-            <input type='hidden' name="er_slug" value="{{ enablement_request.slug }}" />
 
-        </form>
-        <br>
+        {% if group_membership %}
+          <h3>Add Comment:</h3>
+          <form action="" method="post" class="form-horizontal">
+              {% crispy comment_form %}
+              <input type='hidden' name="er_slug" value="{{ object.slug }}" />
+          </form>
+          <br>
+        {% endif %}
     {% endif %}
 
 {% endblock %}

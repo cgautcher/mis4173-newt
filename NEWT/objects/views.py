@@ -179,7 +179,7 @@ class Locate(View):
  
     def post(self, request, *args, **kwargs):
         locate_identifier = request.POST['locate_identifier']
-        results = EnablementRequest.objects.filter(identifier__contains=locate_identifier).order_by('-identifier')
+        objects = EnablementRequest.objects.filter(identifier__contains=locate_identifier).order_by('-identifier')
         group_membership = request.user.groups.values_list('name',flat=True)
         if 'Enablement' in group_membership:
             navbar_options_template = 'enablement_navbar_options.html'
@@ -188,7 +188,7 @@ class Locate(View):
         else:
             navbar_options_template = ''
 
-        context = {'results': results,
+        context = {'objects': objects,
                    'locate_identifier': locate_identifier,
                    'group_membership': group_membership,
                    'navbar_options_template': navbar_options_template,}
@@ -209,34 +209,27 @@ class Filter(View):
             raise PermissionDenied
         filter_form = FilterForm(request.POST)
 
+        # save values from form fields into a dictionary
         filter_form.full_clean() 
         cd = filter_form.cleaned_data
-        customer_name = cd['customer_name']
-        #short_term_revenue = cd['short_term_revenue']
-        os_type = cd['os_type']
-        os_version = cd['os_version']
-        storage_adapter_vendor = cd['storage_adapter_vendor']
-        storage_adapter_model = cd['storage_adapter_model']
-        storage_adapter_driver = cd['storage_adapter_driver']
-        storage_adapter_firmware = cd['storage_adapter_firmware']
-        data_ontap_version = cd['data_ontap_version']
 
         # show pre-filled forms with criteria from the form that triggered the POST
         filter_form = FilterForm(initial=cd)        
 
-        # need to do the JOIN queries to check config details
-        results = EnablementRequest.objects.filter(customer_name__contains=customer_name,
-                                                  # short_term_revenue__gte=short_term_revenue,
-                                                   config_details__os_type__contains=os_type,
-                                                   config_details__os_version__contains=os_version,
-                                                   config_details__storage_adapter_vendor__contains=storage_adapter_vendor,
-                                                   config_details__storage_adapter_model__contains=storage_adapter_model,
-                                                   config_details__storage_adapter_driver__contains=storage_adapter_driver,
-                                                   config_details__storage_adapter_firmware__contains=storage_adapter_firmware,
-                                                   config_details__data_ontap_version__contains=data_ontap_version,
+        # 
+        objects = EnablementRequest.objects.filter(customer_name__contains=cd['customer_name'],
+                                                   short_term_revenue__gte=cd['short_term_revenue'],
+                                                   current_state__contains=cd['current_state'],
+                                                   config_details__os_type__contains=cd['os_type'],
+                                                   config_details__os_version__contains=cd['os_version'],
+                                                   config_details__storage_adapter_vendor__contains=cd['storage_adapter_vendor'],
+                                                   config_details__storage_adapter_model__contains=cd['storage_adapter_model'],
+                                                   config_details__storage_adapter_driver__contains=cd['storage_adapter_driver'],
+                                                   config_details__storage_adapter_firmware__contains=cd['storage_adapter_firmware'],
+                                                   config_details__data_ontap_version__contains=cd['data_ontap_version'],
                                                ).order_by('-identifier')
 
-        context = {'results': results,
+        context = {'objects': objects,
                    'filter_form': filter_form,
                    'request': request,
                    'group_membership': group_membership,
@@ -271,14 +264,16 @@ class ViewDetails(DetailView):
     def get_context_data(self, **kwargs):
         context = super(ViewDetails, self).get_context_data()
         context['config_details'] = context['enablement_request'].config_details
-        context['comments'] = context['enablement_request'].comment_set.all()
+        #context['comments'] = context['enablement_request'].comment_set.all()
         group_membership = self.request.user.groups.values_list('name',flat=True)
         context['group_membership'] = group_membership
         if 'Enablement' in group_membership:
             context['comment_form'] = RequestFeedbackForm()
             context['navbar_options_template'] = 'enablement_navbar_options_update_button.html'
-        else:
+        elif 'Sales' or 'Engineering' or 'Support' in group_membership:
             context['comment_form'] = ProvideFeedbackForm()
+        else:
+            context['comment_form'] = False
         if 'Sales' in group_membership:
             context['navbar_options_template'] = 'sales_navbar_options.html'
         return context

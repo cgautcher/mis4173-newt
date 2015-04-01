@@ -30,6 +30,10 @@ def index(request):
                           }
             template_name = 'home/enablement.html'
 
+        elif group in ('Engineering', 'Support'):
+            object_list_review = EnablementRequest.objects.filter(current_state__contains=group).order_by('-identifier')
+            object_dict = {'object_list_review': object_list_review,}
+            template_name = 'home/engineering_or_support.html'
 
     if object_dict:
         for k,v in object_dict.items():
