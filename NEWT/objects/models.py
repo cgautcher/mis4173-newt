@@ -49,6 +49,8 @@ class EnablementRequest(models.Model):
         from django.core.urlresolvers import reverse
         return reverse('update', kwargs={'slug': self.slug})
 
+    def __unicode__(self):
+        return u'%s' % self.identifier
     
 
 class ConfigDetails(models.Model):

@@ -41,6 +41,7 @@ INSTALLED_APPS = (
     'home',
     'register',
     'objects',
+    'reports',
 )
 
 MIDDLEWARE_CLASSES = (

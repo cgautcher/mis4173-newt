@@ -220,6 +220,7 @@ class Filter(View):
         objects = EnablementRequest.objects.filter(customer_name__contains=cd['customer_name'],
                                                    short_term_revenue__gte=cd['short_term_revenue'],
                                                    current_state__contains=cd['current_state'],
+                                                   assigned_engineer__id__contains=cd['assigned_engineer'],
                                                    config_details__os_type__contains=cd['os_type'],
                                                    config_details__os_version__contains=cd['os_version'],
                                                    config_details__storage_adapter_vendor__contains=cd['storage_adapter_vendor'],
@@ -264,7 +265,6 @@ class ViewDetails(DetailView):
     def get_context_data(self, **kwargs):
         context = super(ViewDetails, self).get_context_data()
         context['config_details'] = context['enablement_request'].config_details
-        #context['comments'] = context['enablement_request'].comment_set.all()
         group_membership = self.request.user.groups.values_list('name',flat=True)
         context['group_membership'] = group_membership
         if 'Enablement' in group_membership:

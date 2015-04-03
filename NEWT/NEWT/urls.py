@@ -10,6 +10,8 @@ from objects.views import (Initiate,
                            Update,)
 
 
+
+
 urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'NEWT.views.home', name='home'),
@@ -22,6 +24,8 @@ urlpatterns = patterns('',
     url(r'^initiate/', Initiate.as_view(), name='initiate'),
 
     url(r'^locate/', Locate.as_view(), name='locate'),
+
+    url(r'^reports/', include('reports.urls')),
 
     url(r'^filter/', Filter.as_view(), name='filter'),
 

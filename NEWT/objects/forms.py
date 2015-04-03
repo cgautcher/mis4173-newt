@@ -39,6 +39,7 @@ class FilterForm(forms.Form):
             'customer_name',
             'short_term_revenue',
             'current_state',
+            'assigned_engineer',
         ),
         Fieldset('Configuration Details',
             'os_type',
@@ -63,6 +64,10 @@ class FilterForm(forms.Form):
     current_state_list.insert(0, ('','----'))
 
     current_state = forms.ChoiceField(label='Current State', choices=current_state_list, required=False)
+
+    ENABLEMENT_ENGINEERS = list(Group.objects.get(name='Enablement').user_set.values_list('id', 'username'))
+    ENABLEMENT_ENGINEERS.insert(0, ('','----'))
+    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS)
 
     os_type_list = list(ConfigDetails.OS_TYPES)
     os_type_list.insert(0, ('','----'))
