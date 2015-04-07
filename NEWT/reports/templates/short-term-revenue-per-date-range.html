@@ -1,0 +1,41 @@
+{% load crispy_forms_tags %}
+{% load humanize %}
+
+    <div class="well" style="max-height: 400px; overflow-y:scroll;">
+        <form action="" method="post" class="form-inline">
+            {% crispy form %}
+        </form>
+        <br>
+        {% if report_content.completed_object_count and report_content.total_short_term_revenue %}
+
+        <div class="row">
+            <table class="table table-hover">
+                <div class="row">
+                    <thead><tr>
+                        <div class="col-sm-3">
+                            <th>Completed Enablement Requests</th>
+                        </div>
+                        <div class="col-sm-3">
+                            <th>Total Short Term Revenue</th>
+                        </div>
+                    </tr></thead>
+                </div>
+                <div class="row">
+                    <tbody>
+                        <tr>
+                            <div class="col-sm-3">
+                                <td>{{ report_content.completed_object_count }}</td>
+                            </div>
+                            <div class="col-sm-3">
+                                <td>${{ report_content.total_short_term_revenue|intcomma }}</td>
+                            </div>
+                        </tr>
+                    </tbody>
+                </div>
+            </table>
+        </div>
+        {% endif %}
+
+
+
+    </div>

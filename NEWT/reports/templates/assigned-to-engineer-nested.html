@@ -1,0 +1,43 @@
+
+
+
+        <table class="table table-hover">
+            <thead><tr>
+                <th>Enablement Engineer</th>
+                <th>Number of Active Requests</th>
+            </tr></thead>
+            <tbody>
+
+            {% for engineer,objects in report_content.items %}
+                <tr>
+                    <td><b>{{ engineer }}</b></td>
+                    <td><b>{{ objects|length }}</b></td>
+                    {% if objects|length > 0 %}
+                        <div class="row">
+                            <div class="col-sm-9 col-sm-push-3 ">
+                                <div class="well">
+                                    <table class="table table-hover">
+                                        <thead><tr>
+                                            <th>ID</th>
+                                            <th>Customer</th>
+                                        </tr></thead>
+                                        <tbody>
+                                            {% for object in objects %}
+                                                <tr>
+                                                    <td>{{ object.identifier }}</td>
+                                                    <td>{{ object.customer_name }}</td>
+                                                </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+
+
+
