@@ -8,14 +8,15 @@
             </tr></thead>
             <tbody>
 
-            {% for k,v in report_content.items %}
+            {% for engineer,objects in report_content.items %}
                 <tr>
-                    <td><b>{{ k }}</b></td>
-                    <td><b>{{ v }}</b></td>
+                    <td><b>{{ engineer }}</b></td>
+                    <td><b>{{ objects|length }}</b></td>
                 </tr>
             {% endfor %}
             </tbody>
         </table>
     </div>
+
 
 

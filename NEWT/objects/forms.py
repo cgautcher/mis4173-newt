@@ -20,7 +20,7 @@ class InitiateForm(forms.Form):
         Fieldset('Customer Details',
             'customer_name',
             'short_term_revenue',
-        ),
+            ),
     )
     
 
@@ -40,7 +40,7 @@ class FilterForm(forms.Form):
             'short_term_revenue',
             'current_state',
             'assigned_engineer',
-        ),
+            ),
         Fieldset('Configuration Details',
             'os_type',
             'os_version',
@@ -49,7 +49,7 @@ class FilterForm(forms.Form):
             'storage_adapter_driver',
             'storage_adapter_firmware',
             'data_ontap_version',
-        ),
+            ),
         Div(
                Reset('Reset The Form', 'Reset', css_class='btn btn-danger'),
                Submit('submit', 'Filter', css_class='btn btn-success'),
@@ -61,13 +61,14 @@ class FilterForm(forms.Form):
     customer_name = forms.CharField(label='Customer Name', required=False)
     short_term_revenue = forms.IntegerField(label='Short Term Revenue', initial=0)
     current_state_list = list(EnablementRequest.ALLOWED_STATES)
-    current_state_list.insert(0, ('','----'))
+    current_state_list.insert(0, (None,'----'))
 
     current_state = forms.ChoiceField(label='Current State', choices=current_state_list, required=False)
 
-    ENABLEMENT_ENGINEERS = list(Group.objects.get(name='Enablement').user_set.values_list('id', 'username'))
-    ENABLEMENT_ENGINEERS.insert(0, ('','----'))
-    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS)
+    members_to_exclude = ['shiva',]
+    ENABLEMENT_ENGINEERS = list(Group.objects.get(name='Enablement').user_set.values_list('id', 'username').exclude(username__in=members_to_exclude))
+    ENABLEMENT_ENGINEERS.insert(0, (None,'----'))
+    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS, required=False)
 
     os_type_list = list(ConfigDetails.OS_TYPES)
     os_type_list.insert(0, ('','----'))
@@ -106,8 +107,10 @@ class UpdateForm(forms.ModelForm):
     current_state = forms.ChoiceField(label='Current State', choices=EnablementRequest.ALLOWED_STATES)
     parent_request = forms.CharField(label='Parent Request', required=False)
 
-    ENABLEMENT_ENGINEERS = tuple(Group.objects.get(name='Enablement').user_set.values_list('id', 'username'))
-    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS)
+    members_to_exclude = ['shiva',]
+    ENABLEMENT_ENGINEERS = list(Group.objects.get(name='Enablement').user_set.values_list('id', 'username').exclude(username__in=members_to_exclude))
+    ENABLEMENT_ENGINEERS.insert(0, (None,'----'))
+    assigned_engineer = forms.ChoiceField(label='Assigned Engineer', choices=ENABLEMENT_ENGINEERS, required=False)
 
     class Meta:
         model = EnablementRequest
@@ -123,9 +126,12 @@ class UpdateForm(forms.ModelForm):
         #run the standard clean method first
         cleaned_data=super(UpdateForm, self).clean()
 
-        assigned_engineer_id = cleaned_data['assigned_engineer']
-        assigned_engineer_instance = User.objects.get(id=assigned_engineer_id)
-        cleaned_data['assigned_engineer'] = assigned_engineer_instance
+        if cleaned_data['assigned_engineer'] == '':
+            cleaned_data['assigned_engineer'] = None
+        else:
+            assigned_engineer_id = cleaned_data['assigned_engineer']
+            assigned_engineer_instance = User.objects.get(id=assigned_engineer_id)
+            cleaned_data['assigned_engineer'] = assigned_engineer_instance
 
         parent_request = cleaned_data['parent_request']
         if parent_request:
@@ -133,6 +139,9 @@ class UpdateForm(forms.ModelForm):
             cleaned_data['parent_request'] = parent_request_instance
         else:
             del cleaned_data['parent_request']
+
+
+
 
         #always return the cleaned data
         return cleaned_data

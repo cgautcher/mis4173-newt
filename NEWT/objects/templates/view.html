@@ -42,6 +42,12 @@
       <p class="lead col-md-4">Current State:</p>
       <p class="lead col-md-3 text-right">{{ object.current_state }}</p>
     </div>
+    {% if object.current_state == 'Completed' %}
+        <div class="row">
+            <p class="lead col-md-4">Completed on:</p>
+            <p class="lead col-md-3 text-right">{{ object.completion_timestamp }}</p>
+        </div>
+    {% endif %}
     <div class="row">
       <p class="lead col-md-4">Assigned Engineer:</p>
       <p class="lead col-md-3 text-right">{{ object.assigned_engineer }}</p>

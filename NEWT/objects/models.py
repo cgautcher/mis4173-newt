@@ -26,6 +26,10 @@ class EnablementRequest(models.Model):
 
     current_state = models.CharField(max_length=32, choices=ALLOWED_STATES)
 
+
+    # this should be updated if the current_state changes to "Completed"
+    completion_timestamp = models.DateTimeField(blank=True, null=True)
+
     # Things that get set automatically
     creation_timestamp = models.DateTimeField(auto_now_add=True)
     config_details = models.ForeignKey('ConfigDetails', null=True)
@@ -35,7 +39,7 @@ class EnablementRequest(models.Model):
 
     identifier = models.CharField(max_length=9, unique=True, blank=True)
     slug = models.SlugField(max_length=9, unique=True, blank=True)
-    
+
 
     # return the view path to the object.
     # + example: "/view/er-000123"
@@ -49,8 +53,6 @@ class EnablementRequest(models.Model):
         from django.core.urlresolvers import reverse
         return reverse('update', kwargs={'slug': self.slug})
 
-    def __unicode__(self):
-        return u'%s' % self.identifier
     
 
 class ConfigDetails(models.Model):

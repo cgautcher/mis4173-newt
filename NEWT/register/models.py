@@ -9,7 +9,7 @@ class AccountRegistration(models.Model):
     user = models.OneToOneField(User)
 
     GROUP_STATUS_CHOICES = (
-        ('GENERIC','Generic user (no special permissions needed)'),
+        ('GENERIC','Generic user (Can view Enablement Requests and comments)'),
         ('SALES','Sales user (Can create/comment on Enablement Requests)'),
         ('ENGSUP','Engineering/Support user (Can comment on Enablement Requests)'),
     )

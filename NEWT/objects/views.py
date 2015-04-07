@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
+from datetime import datetime
 
 from django.core.exceptions import PermissionDenied
 
@@ -110,6 +111,9 @@ class Update(View):
         comment_form = CommentForm(request.POST)
 
         if update_form.is_valid() and config_details_form.is_valid() and comment_form.is_valid():
+            # don't commit to database until we check for other conditions
+            updated_enablement_request = update_form.save(commit=False)
+
             # see if the config_details_id changed upon update, and if so,
             # + does it match an existing request, and if so,
             # + associate the two via the "parent_request" attribute
@@ -121,21 +125,21 @@ class Update(View):
                                            ).exclude(id=enablement_request.id).first()
                 if first_parent_request:
                     parent_request = first_parent_request.identifier
-                    updated_enablement_request = update_form.save(commit=False)
                     updated_enablement_request.parent_request = parent_request
-                    updated_enablement_request.save()
-            else:
-                updated_enablement_request = update_form.save()
 
             post_update_state = updated_enablement_request.current_state
-
             if pre_update_state != post_update_state:
+                if post_update_state == 'Completed':
+                    updated_enablement_request.completion_timestamp = datetime.now()
+
                 comment_form.save(enablement_request=enablement_request,
                                   commenter=request.user,
                                   pre_comment_state=pre_update_state,
                                   post_comment_state=post_update_state)
             else:
                 comment_form.save(enablement_request=enablement_request, commenter=request.user)
+
+            updated_enablement_request.save()
 
             return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))
 
@@ -213,6 +217,9 @@ class Filter(View):
         filter_form.full_clean() 
         cd = filter_form.cleaned_data
 
+        if cd['assigned_engineer'] == '':
+            cd['assigned_engineer'] = None
+
         # show pre-filled forms with criteria from the form that triggered the POST
         filter_form = FilterForm(initial=cd)        
 
@@ -220,7 +227,7 @@ class Filter(View):
         objects = EnablementRequest.objects.filter(customer_name__contains=cd['customer_name'],
                                                    short_term_revenue__gte=cd['short_term_revenue'],
                                                    current_state__contains=cd['current_state'],
-                                                   assigned_engineer__id__contains=cd['assigned_engineer'],
+                                                   assigned_engineer=cd['assigned_engineer'],
                                                    config_details__os_type__contains=cd['os_type'],
                                                    config_details__os_version__contains=cd['os_version'],
                                                    config_details__storage_adapter_vendor__contains=cd['storage_adapter_vendor'],

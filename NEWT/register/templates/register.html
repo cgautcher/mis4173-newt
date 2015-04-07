@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    <div class="jumbotron">
+      <div class="container">
+        <div class="row">
+          <h2 class="col-lg-6">Register</h2>
+        </div>
+      </div>
+    </div>
+    <div class="container">
+
+        <form action="/register/" method="post" class="form-horizontal">
+            {% crispy user_create_form %}
+            {% crispy account_registration_form %}
+        </form>
+        <br>
+
+{% endblock %}

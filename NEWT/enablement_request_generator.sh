@@ -59,8 +59,8 @@ short_term_revenue+=("'3000000'")
 short_term_revenue+=("'4000000'")
 
 
-for x in $(seq 200 240); do
-    echo "INSERT INTO objects_enablementrequest (identifier, creation_timestamp, current_state, customer_name, assigned_engineer_id, config_details_id, parent_request, sales_initiator_id, slug, short_term_revenue) VALUES (\"ER-000${x}\", NOW(), ${current_state[$(random_choice $(seq 0 $((${#current_state[@]}-1))))]}, ${customer_name[$(random_choice $(seq 0 $((${#customer_name[@]}-1))))]}, NULL, $(random_choice $(seq 40 240)), '', $(random_choice 7 9 10), \"er-000${x}\", ${short_term_revenue[$(random_choice $(seq 0 $((${#short_term_revenue[@]}-1))))]});"
+for x in $(seq 100 299); do
+    echo "INSERT INTO objects_enablementrequest (identifier, creation_timestamp, current_state, customer_name, assigned_engineer_id, config_details_id, parent_request, sales_initiator_id, slug, short_term_revenue) VALUES (\"ER-0000${x}\", NOW(), ${current_state[$(random_choice $(seq 0 $((${#current_state[@]}-1))))]}, ${customer_name[$(random_choice $(seq 0 $((${#customer_name[@]}-1))))]}, NULL, $(random_choice $(seq 40 240)), '', $(random_choice 7 9 10), \"er-000${x}\", ${short_term_revenue[$(random_choice $(seq 0 $((${#short_term_revenue[@]}-1))))]});"
 done
 
 
