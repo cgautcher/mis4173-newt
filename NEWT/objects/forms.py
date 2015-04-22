@@ -140,9 +140,6 @@ class UpdateForm(forms.ModelForm):
         else:
             del cleaned_data['parent_request']
 
-
-
-
         #always return the cleaned data
         return cleaned_data
 

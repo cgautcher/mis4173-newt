@@ -76,7 +76,6 @@ class Initiate(View):
 
         return render(request, self.template_name, context)
 
-            
     def get(self, request, *args, **kwargs):
         initiate_form = InitiateForm()
         config_details_form = ConfigDetailsForm()
@@ -224,17 +223,17 @@ class Filter(View):
         filter_form = FilterForm(initial=cd)        
 
         # 
-        objects = EnablementRequest.objects.filter(customer_name__contains=cd['customer_name'],
+        objects = EnablementRequest.objects.filter(customer_name__icontains=cd['customer_name'],
                                                    short_term_revenue__gte=cd['short_term_revenue'],
                                                    current_state__contains=cd['current_state'],
                                                    assigned_engineer=cd['assigned_engineer'],
                                                    config_details__os_type__contains=cd['os_type'],
-                                                   config_details__os_version__contains=cd['os_version'],
+                                                   config_details__os_version__icontains=cd['os_version'],
                                                    config_details__storage_adapter_vendor__contains=cd['storage_adapter_vendor'],
-                                                   config_details__storage_adapter_model__contains=cd['storage_adapter_model'],
-                                                   config_details__storage_adapter_driver__contains=cd['storage_adapter_driver'],
-                                                   config_details__storage_adapter_firmware__contains=cd['storage_adapter_firmware'],
-                                                   config_details__data_ontap_version__contains=cd['data_ontap_version'],
+                                                   config_details__storage_adapter_model__icontains=cd['storage_adapter_model'],
+                                                   config_details__storage_adapter_driver__icontains=cd['storage_adapter_driver'],
+                                                   config_details__storage_adapter_firmware__icontains=cd['storage_adapter_firmware'],
+                                                   config_details__data_ontap_version__icontains=cd['data_ontap_version'],
                                                ).order_by('-identifier')
 
         context = {'objects': objects,
@@ -300,9 +299,10 @@ class CommentInViewDetails(View):
         else:
             comment_form = ProvideFeedbackForm(request.POST)
 
-        enablement_request_slug = request.POST['er_slug']
+        self.slug = request.POST['er_slug']
+
         if comment_form.is_valid():
-            enablement_request = EnablementRequest.objects.get(slug=enablement_request_slug)
+            enablement_request = EnablementRequest.objects.get(slug=self.slug)
             if request.POST['commenters_choice'] and (request.POST['commenters_choice'] != enablement_request.current_state):
                 pre_comment_state = enablement_request.current_state
                 post_comment_state = request.POST['commenters_choice']
@@ -315,7 +315,7 @@ class CommentInViewDetails(View):
             else:
                 comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
-        return HttpResponseRedirect(reverse('view', kwargs={'slug': enablement_request_slug}))
+        return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))
 
 
 class ViewDetailsAndComments(View):
@@ -328,4 +328,3 @@ class ViewDetailsAndComments(View):
     def post(self, request, *args, **kwargs):
         view = CommentInViewDetails.as_view()
         return view(request, *args, **kwargs)
-
