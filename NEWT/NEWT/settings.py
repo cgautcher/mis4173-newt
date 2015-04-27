@@ -114,3 +114,14 @@ TEMPLATE_DIRS = (
 LOGIN_REDIRECT_URL = '/'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap3'
+
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_HOST_USER = 'newt.email.sender@gmail.com'
+EMAIL_HOST_PASSWORD = 'newtpass'
+EMAIL_PORT = 465
+
+EMAIL_USE_SSL = True
+
+EMAIL_SUBJECT_PREFIX = '[NEWT] '
+
+

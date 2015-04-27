@@ -1,8 +1,9 @@
 from django.shortcuts import render
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
-from django.contrib.auth.models import User
+from django.contrib.auth.models import User, Group
 from datetime import datetime
+from django.core.mail import send_mail
 
 from django.core.exceptions import PermissionDenied
 
@@ -67,6 +68,24 @@ class Initiate(View):
 
             comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
+            # send emails to Enablement group members and
+            email_subject = 'Enablement Request %s - New Request initiated by %s' % (identifier, request.user.username)
+            url = 'http://newt.netapp.com:4173/view/%s' % identifier
+
+            sales_initiator_email = request.user.email
+            sales_initiator_message = 'Thank you for your request (%s).  We will review it and respond within 1-2 days. ' % identifier
+            sales_initiator_message += 'You can view the Enablement Request at <a href="%s">%s</a>' % (url, url)
+
+            send_mail(email_subject, sales_initiator_message, 'NEWT Admin', [sales_initiator_email], html_message=sales_initiator_message)
+
+            enablement_group_emails = Group.objects.get(name='Enablement').user_set.values_list('email', flat=True)
+            enablement_group_message = 'A new request has been submitted.  Someone please go look at it:  <a href="%s">%s</a>' % (url, url)
+
+            send_mail(email_subject, enablement_group_message, 'NEWT Admin', enablement_group_emails, html_message=enablement_group_message)
+
+
+
+
             return HttpResponseRedirect(reverse('view', kwargs={'slug': slug}))
 
         context = {'initiate_form': initiate_form,
@@ -76,6 +95,7 @@ class Initiate(View):
 
         return render(request, self.template_name, context)
 
+            
     def get(self, request, *args, **kwargs):
         initiate_form = InitiateForm()
         config_details_form = ConfigDetailsForm()
@@ -128,13 +148,39 @@ class Update(View):
 
             post_update_state = updated_enablement_request.current_state
             if pre_update_state != post_update_state:
-                if post_update_state == 'Completed':
-                    updated_enablement_request.completion_timestamp = datetime.now()
-
                 comment_form.save(enablement_request=enablement_request,
                                   commenter=request.user,
                                   pre_comment_state=pre_update_state,
                                   post_comment_state=post_update_state)
+
+                identifier = enablement_request.identifier
+                url = 'http://newt.netapp.com:4173/view/%s' % identifier
+                email_subject = 'Enablement Request %s - current state has changed to %s' % (identifier, post_update_state)
+                email_message = 'The Enablement Request (%s) state has been changed to "%s".' % (identifier, post_update_state)
+                email_message += 'You can view the Enablement Request at <a href="%s">%s</a>' % (url, url)
+                enablement_group_emails = Group.objects.get(name='Enablement').user_set.values_list('email', flat=True)
+                sales_initiator_email = enablement_request.sales_initiator.email
+                email_addresses = []
+
+                if post_update_state == 'Completed':
+                    updated_enablement_request.completion_timestamp = datetime.now()
+                    email_addresses = [sales_initiator_email]
+                    email_addresses.extend(enablement_group_emails)
+                elif post_update_state == 'Enablement Review':
+                    email_addresses.extend(enablement_group_emails)
+                elif post_update_state == 'Sales Review':
+                    email_addresses = [sales_initiator_email]
+                elif post_update_state == 'Engineering Review':
+                    engineering_group_emails = Group.objects.get(name='Engineering').user_set.values_list('email', flat=True) 
+                    email_addresses.extend(engineering_group_emails)
+                elif post_update_state == 'Support Review':
+                    support_group_emails = Group.objects.get(name='Support').user_set.values_list('email', flat=True) 
+                    email_addresses.extend(support_group_emails)
+                else:
+                    email_addresses = [sales_initiator_email]
+
+                send_mail(email_subject, email_message, 'NEWT Admin', email_addresses, html_message=email_message)
+
             else:
                 comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
@@ -223,17 +269,17 @@ class Filter(View):
         filter_form = FilterForm(initial=cd)        
 
         # 
-        objects = EnablementRequest.objects.filter(customer_name__icontains=cd['customer_name'],
+        objects = EnablementRequest.objects.filter(customer_name__contains=cd['customer_name'],
                                                    short_term_revenue__gte=cd['short_term_revenue'],
                                                    current_state__contains=cd['current_state'],
                                                    assigned_engineer=cd['assigned_engineer'],
                                                    config_details__os_type__contains=cd['os_type'],
-                                                   config_details__os_version__icontains=cd['os_version'],
+                                                   config_details__os_version__contains=cd['os_version'],
                                                    config_details__storage_adapter_vendor__contains=cd['storage_adapter_vendor'],
-                                                   config_details__storage_adapter_model__icontains=cd['storage_adapter_model'],
-                                                   config_details__storage_adapter_driver__icontains=cd['storage_adapter_driver'],
-                                                   config_details__storage_adapter_firmware__icontains=cd['storage_adapter_firmware'],
-                                                   config_details__data_ontap_version__icontains=cd['data_ontap_version'],
+                                                   config_details__storage_adapter_model__contains=cd['storage_adapter_model'],
+                                                   config_details__storage_adapter_driver__contains=cd['storage_adapter_driver'],
+                                                   config_details__storage_adapter_firmware__contains=cd['storage_adapter_firmware'],
+                                                   config_details__data_ontap_version__contains=cd['data_ontap_version'],
                                                ).order_by('-identifier')
 
         context = {'objects': objects,
@@ -299,10 +345,14 @@ class CommentInViewDetails(View):
         else:
             comment_form = ProvideFeedbackForm(request.POST)
 
-        self.slug = request.POST['er_slug']
-
+        enablement_request_slug = request.POST['er_slug']
         if comment_form.is_valid():
-            enablement_request = EnablementRequest.objects.get(slug=self.slug)
+            enablement_request = EnablementRequest.objects.get(slug=enablement_request_slug)
+            comment = request.POST['text']
+            identifier = enablement_request.identifier
+            url = 'http://newt.netapp.com:4173/view/%s' % identifier
+            email_addresses = []
+
             if request.POST['commenters_choice'] and (request.POST['commenters_choice'] != enablement_request.current_state):
                 pre_comment_state = enablement_request.current_state
                 post_comment_state = request.POST['commenters_choice']
@@ -312,10 +362,42 @@ class CommentInViewDetails(View):
                                   post_comment_state=post_comment_state)
                 enablement_request.current_state = post_comment_state
                 enablement_request.save()
+
+                email_subject = 'Enablement Request %s - current state has changed to %s' % (identifier, post_comment_state)
+                email_message = 'The Enablement Request (%s) state has been changed to "%s".<BR><BR>' % (identifier, post_comment_state)
+                email_message += '%s commented: %s <BR><BR>' % (request.user.username, comment)
+                email_message += 'You can view the Enablement Request at <a href="%s">%s</a>' % (url, url)
+
+                if post_comment_state == 'Enablement Review':
+                    enablement_group_emails = Group.objects.get(name='Enablement').user_set.values_list('email', flat=True)
+                    email_addresses.extend(enablement_group_emails)
+                elif post_comment_state == 'Sales Review':
+                    sales_initiator_email = enablement_request.sales_initiator.email
+                    email_addresses = [sales_initiator_email]
+                elif post_comment_state == 'Engineering Review':
+                    engineering_group_emails = Group.objects.get(name='Engineering').user_set.values_list('email', flat=True)
+                    email_addresses.extend(engineering_group_emails)
+                elif post_comment_state == 'Support Review':
+                    support_group_emails = Group.objects.get(name='Support').user_set.values_list('email', flat=True)
+                    email_addresses.extend(support_group_emails)
+
             else:
                 comment_form.save(enablement_request=enablement_request, commenter=request.user)
 
-        return HttpResponseRedirect(reverse('view', kwargs={'slug': self.slug}))
+                sales_initiator_email = enablement_request.sales_initiator.email
+                commenter_email = request.user.email
+                enablement_group_emails = Group.objects.get(name='Enablement').user_set.values_list('email', flat=True)
+                email_addresses = [sales_initiator_email, commenter_email]
+                email_addresses.extend(enablement_group_emails)
+
+                email_subject = 'Enablement Request %s - %s commented' % (identifier, request.user.username)
+                email_message = '%s commented: %s <BR><BR>' % (request.user.username, comment)
+                email_message += 'You can view the Enablement Request at <a href="%s">%s</a>' % (url, url)
+            
+            # send email after figuring out what to send and who to send it to    
+            send_mail(email_subject, email_message, 'NEWT Admin', email_addresses, html_message=email_message)
+
+        return HttpResponseRedirect(reverse('view', kwargs={'slug': enablement_request_slug}))
 
 
 class ViewDetailsAndComments(View):
@@ -328,3 +410,4 @@ class ViewDetailsAndComments(View):
     def post(self, request, *args, **kwargs):
         view = CommentInViewDetails.as_view()
         return view(request, *args, **kwargs)
+

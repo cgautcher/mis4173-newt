@@ -11,7 +11,6 @@ from objects.views import (Initiate,
 
 
 
-
 urlpatterns = patterns('',
     # Examples:
     # url(r'^$', 'NEWT.views.home', name='home'),
